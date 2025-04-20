@@ -10,8 +10,8 @@ tasks:
       - gen
     desc: "Generate code from proto files (execute from projects root)"
     cmds:
-      - rm $(pwd)/gen/*.go || echo "Directory clean"
-      - protoc -I proto proto/*.proto --go_out=./gen --go_opt=paths=source_relative --go-grpc_out=./gen/grpc --go-grpc_opt=paths=source_relative
+      - rm $(pwd)/gen/* || echo "Directory clean"
+      - protoc -I proto proto/*.proto --go_out=./gen --go_opt=paths=source_relative --go-grpc_out=./gen --go-grpc_opt=paths=source_relative
 
   tidy:
     desc: "go mod tidy"

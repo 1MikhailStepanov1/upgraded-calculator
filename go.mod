@@ -10,6 +10,7 @@ require (
 )
 
 require (
+	github.com/go-chi/chi/v5 v5.2.1 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
