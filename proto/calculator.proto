@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package calculator;
+
+option go_package = "upgraded-calculator/proto/gen";
+
+message Operation {
+  oneof operation {
+    CalcOperation calc = 1;
+    PrintOperation print = 2;
+  }
+}
+
+message CalcOperation {
+  string type = 1;
+  string op = 2;
+  string var = 3;
+  oneof left_operand {
+    string left_var = 4;
+    int64 left_num = 5;
+  }
+  oneof right_operand {
+    string right_var = 6;
+    int64 right_num = 7;
+  }
+}
+
+message PrintOperation {
+  string type = 1;
+  string var = 2;
+}
+
+message Request {
+  repeated Operation operation = 1;
+}
+
+message Variable {
+  string var = 1;
+  int32 value = 2;
+}
+
+message Response {
+  repeated Variable items = 1;
+}
+
+
+service Calculator{
+  rpc Execute(Request) returns (Response);
+}
