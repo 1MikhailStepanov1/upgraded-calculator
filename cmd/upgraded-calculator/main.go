@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"github.com/joho/godotenv"
 	"log/slog"
 	"os"
@@ -21,7 +22,7 @@ func init() {
 func main() {
 	config := cfg.New()
 	logger := setupLogger(config.App.LogLevel)
-
+	ctx := context.Background()
 }
 
 func setupLogger(env string) *slog.Logger {
