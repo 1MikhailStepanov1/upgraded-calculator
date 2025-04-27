@@ -11,22 +11,36 @@ message Operation {
   }
 }
 
-message CalcOperation {
-  string type = 1;
-  string op = 2;
-  string var = 3;
-  oneof left_operand {
-    string left_var = 4;
-    int64 left_num = 5;
-  }
-  oneof right_operand {
-    string right_var = 6;
-    int64 right_num = 7;
+enum OperationType {
+  UNSPECIFIED = 0;
+  CALC = 1;
+  PRINT = 2;
+}
+
+enum CalcAvailableOperations {
+  ADD = 0;
+  SUBTRACT = 1;
+  MULTIPLY = 2;
+  DIVIDE = 3;
+}
+
+message Operand {
+  oneof value {
+    int64 number = 1;
+    string variable = 2;
   }
 }
 
+message CalcOperation {
+  OperationType type = 1;
+  string op = 2;
+  string var = 3;
+  Operand left_operand = 4;
+  Operand right_operand = 5;
+}
+
 message PrintOperation {
-  string type = 1;
+  string OperationType = 1;
   string var = 2;
 }
 
