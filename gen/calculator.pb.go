@@ -70,58 +70,6 @@ func (OperationType) EnumDescriptor() ([]byte, []int) {
 	return file_calculator_proto_rawDescGZIP(), []int{0}
 }
 
-type CalcAvailableOperations int32
-
-const (
-	CalcAvailableOperations_ADD      CalcAvailableOperations = 0
-	CalcAvailableOperations_SUBTRACT CalcAvailableOperations = 1
-	CalcAvailableOperations_MULTIPLY CalcAvailableOperations = 2
-	CalcAvailableOperations_DIVIDE   CalcAvailableOperations = 3
-)
-
-// Enum value maps for CalcAvailableOperations.
-var (
-	CalcAvailableOperations_name = map[int32]string{
-		0: "ADD",
-		1: "SUBTRACT",
-		2: "MULTIPLY",
-		3: "DIVIDE",
-	}
-	CalcAvailableOperations_value = map[string]int32{
-		"ADD":      0,
-		"SUBTRACT": 1,
-		"MULTIPLY": 2,
-		"DIVIDE":   3,
-	}
-)
-
-func (x CalcAvailableOperations) Enum() *CalcAvailableOperations {
-	p := new(CalcAvailableOperations)
-	*p = x
-	return p
-}
-
-func (x CalcAvailableOperations) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (CalcAvailableOperations) Descriptor() protoreflect.EnumDescriptor {
-	return file_calculator_proto_enumTypes[1].Descriptor()
-}
-
-func (CalcAvailableOperations) Type() protoreflect.EnumType {
-	return &file_calculator_proto_enumTypes[1]
-}
-
-func (x CalcAvailableOperations) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use CalcAvailableOperations.Descriptor instead.
-func (CalcAvailableOperations) EnumDescriptor() ([]byte, []int) {
-	return file_calculator_proto_rawDescGZIP(), []int{1}
-}
-
 type Operation struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Operation:
@@ -461,7 +409,7 @@ func (x *Request) GetOperation() []*Operation {
 type Variable struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Var           string                 `protobuf:"bytes,1,opt,name=var,proto3" json:"var,omitempty"`
-	Value         int32                  `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
+	Value         int64                  `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -503,7 +451,7 @@ func (x *Variable) GetVar() string {
 	return ""
 }
 
-func (x *Variable) GetValue() int32 {
+func (x *Variable) GetValue() int64 {
 	if x != nil {
 		return x.Value
 	}
@@ -581,19 +529,13 @@ const file_calculator_proto_rawDesc = "" +
 	"\toperation\x18\x01 \x03(\v2\x15.calculator.OperationR\toperation\"2\n" +
 	"\bVariable\x12\x10\n" +
 	"\x03var\x18\x01 \x01(\tR\x03var\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x05R\x05value\"6\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value\"6\n" +
 	"\bResponse\x12*\n" +
 	"\x05items\x18\x01 \x03(\v2\x14.calculator.VariableR\x05items*5\n" +
 	"\rOperationType\x12\x0f\n" +
 	"\vUNSPECIFIED\x10\x00\x12\b\n" +
 	"\x04CALC\x10\x01\x12\t\n" +
-	"\x05PRINT\x10\x02*J\n" +
-	"\x17CalcAvailableOperations\x12\a\n" +
-	"\x03ADD\x10\x00\x12\f\n" +
-	"\bSUBTRACT\x10\x01\x12\f\n" +
-	"\bMULTIPLY\x10\x02\x12\n" +
-	"\n" +
-	"\x06DIVIDE\x10\x032B\n" +
+	"\x05PRINT\x10\x022B\n" +
 	"\n" +
 	"Calculator\x124\n" +
 	"\aExecute\x12\x13.calculator.Request\x1a\x14.calculator.ResponseB\x1fZ\x1dupgraded-calculator/proto/genb\x06proto3"
@@ -610,29 +552,28 @@ func file_calculator_proto_rawDescGZIP() []byte {
 	return file_calculator_proto_rawDescData
 }
 
-var file_calculator_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_calculator_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_calculator_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_calculator_proto_goTypes = []any{
-	(OperationType)(0),           // 0: calculator.OperationType
-	(CalcAvailableOperations)(0), // 1: calculator.CalcAvailableOperations
-	(*Operation)(nil),            // 2: calculator.Operation
-	(*Operand)(nil),              // 3: calculator.Operand
-	(*CalcOperation)(nil),        // 4: calculator.CalcOperation
-	(*PrintOperation)(nil),       // 5: calculator.PrintOperation
-	(*Request)(nil),              // 6: calculator.Request
-	(*Variable)(nil),             // 7: calculator.Variable
-	(*Response)(nil),             // 8: calculator.Response
+	(OperationType)(0),     // 0: calculator.OperationType
+	(*Operation)(nil),      // 1: calculator.Operation
+	(*Operand)(nil),        // 2: calculator.Operand
+	(*CalcOperation)(nil),  // 3: calculator.CalcOperation
+	(*PrintOperation)(nil), // 4: calculator.PrintOperation
+	(*Request)(nil),        // 5: calculator.Request
+	(*Variable)(nil),       // 6: calculator.Variable
+	(*Response)(nil),       // 7: calculator.Response
 }
 var file_calculator_proto_depIdxs = []int32{
-	4, // 0: calculator.Operation.calc:type_name -> calculator.CalcOperation
-	5, // 1: calculator.Operation.print:type_name -> calculator.PrintOperation
+	3, // 0: calculator.Operation.calc:type_name -> calculator.CalcOperation
+	4, // 1: calculator.Operation.print:type_name -> calculator.PrintOperation
 	0, // 2: calculator.CalcOperation.type:type_name -> calculator.OperationType
-	3, // 3: calculator.CalcOperation.left_operand:type_name -> calculator.Operand
-	3, // 4: calculator.CalcOperation.right_operand:type_name -> calculator.Operand
-	2, // 5: calculator.Request.operation:type_name -> calculator.Operation
-	7, // 6: calculator.Response.items:type_name -> calculator.Variable
-	6, // 7: calculator.Calculator.Execute:input_type -> calculator.Request
-	8, // 8: calculator.Calculator.Execute:output_type -> calculator.Response
+	2, // 3: calculator.CalcOperation.left_operand:type_name -> calculator.Operand
+	2, // 4: calculator.CalcOperation.right_operand:type_name -> calculator.Operand
+	1, // 5: calculator.Request.operation:type_name -> calculator.Operation
+	6, // 6: calculator.Response.items:type_name -> calculator.Variable
+	5, // 7: calculator.Calculator.Execute:input_type -> calculator.Request
+	7, // 8: calculator.Calculator.Execute:output_type -> calculator.Response
 	8, // [8:9] is the sub-list for method output_type
 	7, // [7:8] is the sub-list for method input_type
 	7, // [7:7] is the sub-list for extension type_name
@@ -658,7 +599,7 @@ func file_calculator_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_calculator_proto_rawDesc), len(file_calculator_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      1,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,

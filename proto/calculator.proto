@@ -17,13 +17,6 @@ enum OperationType {
   PRINT = 2;
 }
 
-enum CalcAvailableOperations {
-  ADD = 0;
-  SUBTRACT = 1;
-  MULTIPLY = 2;
-  DIVIDE = 3;
-}
-
 message Operand {
   oneof value {
     int64 number = 1;
@@ -50,7 +43,7 @@ message Request {
 
 message Variable {
   string var = 1;
-  int32 value = 2;
+  int64 value = 2;
 }
 
 message Response {

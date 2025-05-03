@@ -4,8 +4,10 @@ import (
 	"context"
 	"github.com/joho/godotenv"
 	"log/slog"
+	"net/http"
 	"os"
 	cfg "upgraded-calculator/internal/config"
+	calculatorHttpServer "upgraded-calculator/internal/http"
 )
 
 const (
@@ -20,9 +22,20 @@ func init() {
 }
 
 func main() {
+	// Initializing environment instruments
 	config := cfg.New()
 	logger := setupLogger(config.App.LogLevel)
 	ctx := context.Background()
+
+	// Initializing HTTP server
+	httpServer, httpServerContext := calculatorHttpServer.CreateServer(config, logger, ctx)
+	logger.Info("Server started")
+	err := httpServer.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
+		logger.Error(err.Error())
+	}
+
+	<-httpServerContext.Done()
 }
 
 func setupLogger(env string) *slog.Logger {
