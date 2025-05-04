@@ -1,13 +1,14 @@
 package main
 
 import (
-	"context"
+	"fmt"
 	"github.com/joho/godotenv"
 	"log/slog"
-	"net/http"
+	"net"
 	"os"
 	cfg "upgraded-calculator/internal/config"
-	calculatorHttpServer "upgraded-calculator/internal/http"
+	calculatorGrpcServer "upgraded-calculator/internal/grpc"
+	//calculatorHttpServer "upgraded-calculator/internal/http"
 )
 
 const (
@@ -25,17 +26,27 @@ func main() {
 	// Initializing environment instruments
 	config := cfg.New()
 	logger := setupLogger(config.App.LogLevel)
-	ctx := context.Background()
+	//ctx := context.Background()
 
 	// Initializing HTTP server
-	httpServer, httpServerContext := calculatorHttpServer.CreateServer(config, logger, ctx)
-	logger.Info("Server started")
-	err := httpServer.ListenAndServe()
-	if err != nil && err != http.ErrServerClosed {
-		logger.Error(err.Error())
+	//httpServer, httpServerContext := calculatorHttpServer.CreateServer(config, logger, ctx)
+	//logger.Info("HTTP Server started")
+	//err := httpServer.ListenAndServe()
+	//if err != nil && err != http.ErrServerClosed {
+	//	logger.Error(err.Error())
+	//}
+	//
+	//<-httpServerContext.Done()
+	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", config.App.GRPCPort))
+	if err != nil {
+		logger.Error("Failed to listen GRPC server: %v", err.Error())
 	}
 
-	<-httpServerContext.Done()
+	server := calculatorGrpcServer.CreateServer(config, logger)
+	logger.Info("GRPC Server started")
+	if err := server.Serve(lis); err != nil {
+		logger.Error("Failed to serve GRPC server: %v", err.Error())
+	}
 }
 
 func setupLogger(env string) *slog.Logger {

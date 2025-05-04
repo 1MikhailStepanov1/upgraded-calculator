@@ -31,7 +31,7 @@ func CreateServer(
 	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		// TODO убрать перевод в байты вместе с шаблоном фасада
 		bodyInBytes, err := io.ReadAll(r.Body)
-		response, err := calculator.Execute(ctx, bodyInBytes)
+		response, err := calculator.ExecuteHTTP(ctx, bodyInBytes)
 		if err != nil {
 			// TODO Сделать отсылку разных кодов ответа на разные ошибки
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -49,7 +49,7 @@ func CreateServer(
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
 		<-sig
-		shutdownCtx, _ := context.WithTimeout(serverCtx, 5*time.Second)
+		shutdownCtx, _ := context.WithTimeout(serverCtx, config.App.HTTPShutdownTimeout*time.Second)
 		go func() {
 			<-shutdownCtx.Done()
 			if shutdownCtx.Err() == context.DeadlineExceeded {

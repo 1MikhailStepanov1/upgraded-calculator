@@ -42,10 +42,75 @@ type CalculatorGRPCHandler struct {
 	logger *slog.Logger
 }
 
-func (c *CalculatorGRPCHandler) Execute(ctx context.Context, req *gen.Request) ([]byte, error) {
-	c.logger.Info("Processing request with request_id", "request_id", ctx.Value("request_id"))
+func (calcGRPC *CalculatorGRPCHandler) Execute(ctx context.Context, req *gen.Request) (*gen.Response, error) {
+	calcGRPC.logger.Info("Processing request with request_id", "request_id", ctx.Value("request_id"))
+	c := Calculator{logger: calcGRPC.logger}
+	// Parsing operations from request
+	var ops []Operation
+	calcGRPC.logger.Debug(fmt.Sprintf("req ops len %d", len(req.Operation)))
+	for _, op := range req.GetOperation() {
+		calcGRPC.logger.Debug(fmt.Sprintf("Deserialized operations: %+v", req))
+		if validatedOp, err := calcGRPC.validateAndParseOperation(op); err == nil {
+			ops = append(ops, *validatedOp)
+		} else {
+			c.logger.Error(err.Error())
+		}
+	}
+	output, err := c.Execute(ctx, ops)
+	if err != nil {
+		calcGRPC.logger.Error(err.Error())
+		return nil, err
+	}
+	formedResponse, _ := calcGRPC.formResponse(output)
+	resp := &gen.Response{Items: formedResponse}
+	return resp, nil
+}
 
-	return []byte{}, nil
+func (calcGRPC *CalculatorGRPCHandler) validateAndParseOperation(op *gen.Operation) (*Operation, error) {
+	result := Operation{}
+	result.Var = op.Var
+	calcGRPC.logger.Debug(fmt.Sprintf("Deserialized operation: %+v", op))
+	switch OperationType(op.Type) {
+	case CalcOperation:
+		result.Type = OperationType(op.Type)
+		if op.Op == nil {
+			return nil, errors.New("operation cannot be nil")
+		}
+		switch CalcAvailableOperation(*op.Op) {
+		case Add, Sub, Mul, Div:
+			result.Op = CalcAvailableOperation(*op.Op)
+		default:
+			return nil, errors.New("invalid operation type from request")
+		}
+
+		switch v := op.LeftOperand.GetValue().(type) {
+		case *gen.Operand_Number:
+			result.Left = &Operand{IntValue: &v.Number, StringValue: nil}
+		case *gen.Operand_Variable:
+			result.Left = &Operand{IntValue: nil, StringValue: &v.Variable}
+		}
+
+		switch v := op.RightOperand.GetValue().(type) {
+		case *gen.Operand_Number:
+			result.Right = &Operand{IntValue: &v.Number, StringValue: nil}
+		case *gen.Operand_Variable:
+			result.Right = &Operand{IntValue: nil, StringValue: &v.Variable}
+		}
+	case PrintOperation:
+		result.Type = OperationType(op.Type)
+	default:
+		return nil, errors.New("invalid operation type from request")
+	}
+	calcGRPC.logger.Debug(fmt.Sprintf("Deserialized operation: %+v", op))
+	return &result, nil
+}
+
+func (calcGRPC *CalculatorGRPCHandler) formResponse(outputList []PrintOutput) ([]*gen.Variable, error) {
+	result := make([]*gen.Variable, len(outputList))
+	for _, op := range outputList {
+		result = append(result, &gen.Variable{Var: op.Var, Value: op.Value})
+	}
+	return result, nil
 }
 
 // Общий фасад калькулятора
@@ -63,15 +128,12 @@ func NewCalculatorFacade(logger *slog.Logger) *CalculatorFacade {
 	}
 }
 
-func (c *CalculatorFacade) Execute(ctx context.Context, input interface{}) ([]byte, error) {
-	switch data := input.(type) {
-	case []byte:
-		return c.httpHandler.Execute(ctx, data)
-	case *gen.Request:
-		return c.grpcHandler.Execute(ctx, data)
-	default:
-		return nil, nil
-	}
+func (c *CalculatorFacade) ExecuteHTTP(ctx context.Context, input []byte) ([]byte, error) {
+	return c.httpHandler.Execute(ctx, input)
+}
+
+func (c *CalculatorFacade) ExecuteGRPC(ctx context.Context, request *gen.Request) (*gen.Response, error) {
+	return c.grpcHandler.Execute(ctx, request)
 }
 
 type Calculator struct {

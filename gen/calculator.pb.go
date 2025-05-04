@@ -21,137 +21,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type OperationType int32
-
-const (
-	OperationType_UNSPECIFIED OperationType = 0
-	OperationType_CALC        OperationType = 1
-	OperationType_PRINT       OperationType = 2
-)
-
-// Enum value maps for OperationType.
-var (
-	OperationType_name = map[int32]string{
-		0: "UNSPECIFIED",
-		1: "CALC",
-		2: "PRINT",
-	}
-	OperationType_value = map[string]int32{
-		"UNSPECIFIED": 0,
-		"CALC":        1,
-		"PRINT":       2,
-	}
-)
-
-func (x OperationType) Enum() *OperationType {
-	p := new(OperationType)
-	*p = x
-	return p
-}
-
-func (x OperationType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (OperationType) Descriptor() protoreflect.EnumDescriptor {
-	return file_calculator_proto_enumTypes[0].Descriptor()
-}
-
-func (OperationType) Type() protoreflect.EnumType {
-	return &file_calculator_proto_enumTypes[0]
-}
-
-func (x OperationType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use OperationType.Descriptor instead.
-func (OperationType) EnumDescriptor() ([]byte, []int) {
-	return file_calculator_proto_rawDescGZIP(), []int{0}
-}
-
-type Operation struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Operation:
-	//
-	//	*Operation_Calc
-	//	*Operation_Print
-	Operation     isOperation_Operation `protobuf_oneof:"operation"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Operation) Reset() {
-	*x = Operation{}
-	mi := &file_calculator_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Operation) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Operation) ProtoMessage() {}
-
-func (x *Operation) ProtoReflect() protoreflect.Message {
-	mi := &file_calculator_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Operation.ProtoReflect.Descriptor instead.
-func (*Operation) Descriptor() ([]byte, []int) {
-	return file_calculator_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *Operation) GetOperation() isOperation_Operation {
-	if x != nil {
-		return x.Operation
-	}
-	return nil
-}
-
-func (x *Operation) GetCalc() *CalcOperation {
-	if x != nil {
-		if x, ok := x.Operation.(*Operation_Calc); ok {
-			return x.Calc
-		}
-	}
-	return nil
-}
-
-func (x *Operation) GetPrint() *PrintOperation {
-	if x != nil {
-		if x, ok := x.Operation.(*Operation_Print); ok {
-			return x.Print
-		}
-	}
-	return nil
-}
-
-type isOperation_Operation interface {
-	isOperation_Operation()
-}
-
-type Operation_Calc struct {
-	Calc *CalcOperation `protobuf:"bytes,1,opt,name=calc,proto3,oneof"`
-}
-
-type Operation_Print struct {
-	Print *PrintOperation `protobuf:"bytes,2,opt,name=print,proto3,oneof"`
-}
-
-func (*Operation_Calc) isOperation_Operation() {}
-
-func (*Operation_Print) isOperation_Operation() {}
-
 type Operand struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Value:
@@ -165,7 +34,7 @@ type Operand struct {
 
 func (x *Operand) Reset() {
 	*x = Operand{}
-	mi := &file_calculator_proto_msgTypes[1]
+	mi := &file_calculator_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -177,7 +46,7 @@ func (x *Operand) String() string {
 func (*Operand) ProtoMessage() {}
 
 func (x *Operand) ProtoReflect() protoreflect.Message {
-	mi := &file_calculator_proto_msgTypes[1]
+	mi := &file_calculator_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -190,7 +59,7 @@ func (x *Operand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Operand.ProtoReflect.Descriptor instead.
 func (*Operand) Descriptor() ([]byte, []int) {
-	return file_calculator_proto_rawDescGZIP(), []int{1}
+	return file_calculator_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Operand) GetValue() isOperand_Value {
@@ -234,32 +103,32 @@ func (*Operand_Number) isOperand_Value() {}
 
 func (*Operand_Variable) isOperand_Value() {}
 
-type CalcOperation struct {
+type Operation struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Type          OperationType          `protobuf:"varint,1,opt,name=type,proto3,enum=calculator.OperationType" json:"type,omitempty"`
-	Op            string                 `protobuf:"bytes,2,opt,name=op,proto3" json:"op,omitempty"`
+	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
+	Op            *string                `protobuf:"bytes,2,opt,name=op,proto3,oneof" json:"op,omitempty"`
 	Var           string                 `protobuf:"bytes,3,opt,name=var,proto3" json:"var,omitempty"`
-	LeftOperand   *Operand               `protobuf:"bytes,4,opt,name=left_operand,json=leftOperand,proto3" json:"left_operand,omitempty"`
-	RightOperand  *Operand               `protobuf:"bytes,5,opt,name=right_operand,json=rightOperand,proto3" json:"right_operand,omitempty"`
+	LeftOperand   *Operand               `protobuf:"bytes,4,opt,name=left_operand,json=leftOperand,proto3,oneof" json:"left_operand,omitempty"`
+	RightOperand  *Operand               `protobuf:"bytes,5,opt,name=right_operand,json=rightOperand,proto3,oneof" json:"right_operand,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CalcOperation) Reset() {
-	*x = CalcOperation{}
-	mi := &file_calculator_proto_msgTypes[2]
+func (x *Operation) Reset() {
+	*x = Operation{}
+	mi := &file_calculator_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CalcOperation) String() string {
+func (x *Operation) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CalcOperation) ProtoMessage() {}
+func (*Operation) ProtoMessage() {}
 
-func (x *CalcOperation) ProtoReflect() protoreflect.Message {
-	mi := &file_calculator_proto_msgTypes[2]
+func (x *Operation) ProtoReflect() protoreflect.Message {
+	mi := &file_calculator_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -270,96 +139,44 @@ func (x *CalcOperation) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CalcOperation.ProtoReflect.Descriptor instead.
-func (*CalcOperation) Descriptor() ([]byte, []int) {
-	return file_calculator_proto_rawDescGZIP(), []int{2}
+// Deprecated: Use Operation.ProtoReflect.Descriptor instead.
+func (*Operation) Descriptor() ([]byte, []int) {
+	return file_calculator_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *CalcOperation) GetType() OperationType {
+func (x *Operation) GetType() string {
 	if x != nil {
 		return x.Type
-	}
-	return OperationType_UNSPECIFIED
-}
-
-func (x *CalcOperation) GetOp() string {
-	if x != nil {
-		return x.Op
 	}
 	return ""
 }
 
-func (x *CalcOperation) GetVar() string {
+func (x *Operation) GetOp() string {
+	if x != nil && x.Op != nil {
+		return *x.Op
+	}
+	return ""
+}
+
+func (x *Operation) GetVar() string {
 	if x != nil {
 		return x.Var
 	}
 	return ""
 }
 
-func (x *CalcOperation) GetLeftOperand() *Operand {
+func (x *Operation) GetLeftOperand() *Operand {
 	if x != nil {
 		return x.LeftOperand
 	}
 	return nil
 }
 
-func (x *CalcOperation) GetRightOperand() *Operand {
+func (x *Operation) GetRightOperand() *Operand {
 	if x != nil {
 		return x.RightOperand
 	}
 	return nil
-}
-
-type PrintOperation struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	OperationType string                 `protobuf:"bytes,1,opt,name=OperationType,proto3" json:"OperationType,omitempty"`
-	Var           string                 `protobuf:"bytes,2,opt,name=var,proto3" json:"var,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PrintOperation) Reset() {
-	*x = PrintOperation{}
-	mi := &file_calculator_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PrintOperation) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PrintOperation) ProtoMessage() {}
-
-func (x *PrintOperation) ProtoReflect() protoreflect.Message {
-	mi := &file_calculator_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PrintOperation.ProtoReflect.Descriptor instead.
-func (*PrintOperation) Descriptor() ([]byte, []int) {
-	return file_calculator_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *PrintOperation) GetOperationType() string {
-	if x != nil {
-		return x.OperationType
-	}
-	return ""
-}
-
-func (x *PrintOperation) GetVar() string {
-	if x != nil {
-		return x.Var
-	}
-	return ""
 }
 
 type Request struct {
@@ -371,7 +188,7 @@ type Request struct {
 
 func (x *Request) Reset() {
 	*x = Request{}
-	mi := &file_calculator_proto_msgTypes[4]
+	mi := &file_calculator_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -383,7 +200,7 @@ func (x *Request) String() string {
 func (*Request) ProtoMessage() {}
 
 func (x *Request) ProtoReflect() protoreflect.Message {
-	mi := &file_calculator_proto_msgTypes[4]
+	mi := &file_calculator_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -396,7 +213,7 @@ func (x *Request) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Request.ProtoReflect.Descriptor instead.
 func (*Request) Descriptor() ([]byte, []int) {
-	return file_calculator_proto_rawDescGZIP(), []int{4}
+	return file_calculator_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Request) GetOperation() []*Operation {
@@ -416,7 +233,7 @@ type Variable struct {
 
 func (x *Variable) Reset() {
 	*x = Variable{}
-	mi := &file_calculator_proto_msgTypes[5]
+	mi := &file_calculator_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -428,7 +245,7 @@ func (x *Variable) String() string {
 func (*Variable) ProtoMessage() {}
 
 func (x *Variable) ProtoReflect() protoreflect.Message {
-	mi := &file_calculator_proto_msgTypes[5]
+	mi := &file_calculator_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -441,7 +258,7 @@ func (x *Variable) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Variable.ProtoReflect.Descriptor instead.
 func (*Variable) Descriptor() ([]byte, []int) {
-	return file_calculator_proto_rawDescGZIP(), []int{5}
+	return file_calculator_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Variable) GetVar() string {
@@ -467,7 +284,7 @@ type Response struct {
 
 func (x *Response) Reset() {
 	*x = Response{}
-	mi := &file_calculator_proto_msgTypes[6]
+	mi := &file_calculator_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -479,7 +296,7 @@ func (x *Response) String() string {
 func (*Response) ProtoMessage() {}
 
 func (x *Response) ProtoReflect() protoreflect.Message {
-	mi := &file_calculator_proto_msgTypes[6]
+	mi := &file_calculator_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -492,7 +309,7 @@ func (x *Response) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Response.ProtoReflect.Descriptor instead.
 func (*Response) Descriptor() ([]byte, []int) {
-	return file_calculator_proto_rawDescGZIP(), []int{6}
+	return file_calculator_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Response) GetItems() []*Variable {
@@ -507,35 +324,27 @@ var File_calculator_proto protoreflect.FileDescriptor
 const file_calculator_proto_rawDesc = "" +
 	"\n" +
 	"\x10calculator.proto\x12\n" +
-	"calculator\"}\n" +
-	"\tOperation\x12/\n" +
-	"\x04calc\x18\x01 \x01(\v2\x19.calculator.CalcOperationH\x00R\x04calc\x122\n" +
-	"\x05print\x18\x02 \x01(\v2\x1a.calculator.PrintOperationH\x00R\x05printB\v\n" +
-	"\toperation\"J\n" +
+	"calculator\"J\n" +
 	"\aOperand\x12\x18\n" +
 	"\x06number\x18\x01 \x01(\x03H\x00R\x06number\x12\x1c\n" +
 	"\bvariable\x18\x02 \x01(\tH\x00R\bvariableB\a\n" +
-	"\x05value\"\xd2\x01\n" +
-	"\rCalcOperation\x12-\n" +
-	"\x04type\x18\x01 \x01(\x0e2\x19.calculator.OperationTypeR\x04type\x12\x0e\n" +
-	"\x02op\x18\x02 \x01(\tR\x02op\x12\x10\n" +
-	"\x03var\x18\x03 \x01(\tR\x03var\x126\n" +
-	"\fleft_operand\x18\x04 \x01(\v2\x13.calculator.OperandR\vleftOperand\x128\n" +
-	"\rright_operand\x18\x05 \x01(\v2\x13.calculator.OperandR\frightOperand\"H\n" +
-	"\x0ePrintOperation\x12$\n" +
-	"\rOperationType\x18\x01 \x01(\tR\rOperationType\x12\x10\n" +
-	"\x03var\x18\x02 \x01(\tR\x03var\">\n" +
+	"\x05value\"\xec\x01\n" +
+	"\tOperation\x12\x12\n" +
+	"\x04type\x18\x01 \x01(\tR\x04type\x12\x13\n" +
+	"\x02op\x18\x02 \x01(\tH\x00R\x02op\x88\x01\x01\x12\x10\n" +
+	"\x03var\x18\x03 \x01(\tR\x03var\x12;\n" +
+	"\fleft_operand\x18\x04 \x01(\v2\x13.calculator.OperandH\x01R\vleftOperand\x88\x01\x01\x12=\n" +
+	"\rright_operand\x18\x05 \x01(\v2\x13.calculator.OperandH\x02R\frightOperand\x88\x01\x01B\x05\n" +
+	"\x03_opB\x0f\n" +
+	"\r_left_operandB\x10\n" +
+	"\x0e_right_operand\">\n" +
 	"\aRequest\x123\n" +
 	"\toperation\x18\x01 \x03(\v2\x15.calculator.OperationR\toperation\"2\n" +
 	"\bVariable\x12\x10\n" +
 	"\x03var\x18\x01 \x01(\tR\x03var\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\x03R\x05value\"6\n" +
 	"\bResponse\x12*\n" +
-	"\x05items\x18\x01 \x03(\v2\x14.calculator.VariableR\x05items*5\n" +
-	"\rOperationType\x12\x0f\n" +
-	"\vUNSPECIFIED\x10\x00\x12\b\n" +
-	"\x04CALC\x10\x01\x12\t\n" +
-	"\x05PRINT\x10\x022B\n" +
+	"\x05items\x18\x01 \x03(\v2\x14.calculator.VariableR\x05items2B\n" +
 	"\n" +
 	"Calculator\x124\n" +
 	"\aExecute\x12\x13.calculator.Request\x1a\x14.calculator.ResponseB\x1fZ\x1dupgraded-calculator/proto/genb\x06proto3"
@@ -552,33 +361,26 @@ func file_calculator_proto_rawDescGZIP() []byte {
 	return file_calculator_proto_rawDescData
 }
 
-var file_calculator_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_calculator_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_calculator_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_calculator_proto_goTypes = []any{
-	(OperationType)(0),     // 0: calculator.OperationType
-	(*Operation)(nil),      // 1: calculator.Operation
-	(*Operand)(nil),        // 2: calculator.Operand
-	(*CalcOperation)(nil),  // 3: calculator.CalcOperation
-	(*PrintOperation)(nil), // 4: calculator.PrintOperation
-	(*Request)(nil),        // 5: calculator.Request
-	(*Variable)(nil),       // 6: calculator.Variable
-	(*Response)(nil),       // 7: calculator.Response
+	(*Operand)(nil),   // 0: calculator.Operand
+	(*Operation)(nil), // 1: calculator.Operation
+	(*Request)(nil),   // 2: calculator.Request
+	(*Variable)(nil),  // 3: calculator.Variable
+	(*Response)(nil),  // 4: calculator.Response
 }
 var file_calculator_proto_depIdxs = []int32{
-	3, // 0: calculator.Operation.calc:type_name -> calculator.CalcOperation
-	4, // 1: calculator.Operation.print:type_name -> calculator.PrintOperation
-	0, // 2: calculator.CalcOperation.type:type_name -> calculator.OperationType
-	2, // 3: calculator.CalcOperation.left_operand:type_name -> calculator.Operand
-	2, // 4: calculator.CalcOperation.right_operand:type_name -> calculator.Operand
-	1, // 5: calculator.Request.operation:type_name -> calculator.Operation
-	6, // 6: calculator.Response.items:type_name -> calculator.Variable
-	5, // 7: calculator.Calculator.Execute:input_type -> calculator.Request
-	7, // 8: calculator.Calculator.Execute:output_type -> calculator.Response
-	8, // [8:9] is the sub-list for method output_type
-	7, // [7:8] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	0, // 0: calculator.Operation.left_operand:type_name -> calculator.Operand
+	0, // 1: calculator.Operation.right_operand:type_name -> calculator.Operand
+	1, // 2: calculator.Request.operation:type_name -> calculator.Operation
+	3, // 3: calculator.Response.items:type_name -> calculator.Variable
+	2, // 4: calculator.Calculator.Execute:input_type -> calculator.Request
+	4, // 5: calculator.Calculator.Execute:output_type -> calculator.Response
+	5, // [5:6] is the sub-list for method output_type
+	4, // [4:5] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_calculator_proto_init() }
@@ -587,26 +389,22 @@ func file_calculator_proto_init() {
 		return
 	}
 	file_calculator_proto_msgTypes[0].OneofWrappers = []any{
-		(*Operation_Calc)(nil),
-		(*Operation_Print)(nil),
-	}
-	file_calculator_proto_msgTypes[1].OneofWrappers = []any{
 		(*Operand_Number)(nil),
 		(*Operand_Variable)(nil),
 	}
+	file_calculator_proto_msgTypes[1].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_calculator_proto_rawDesc), len(file_calculator_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   7,
+			NumEnums:      0,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_calculator_proto_goTypes,
 		DependencyIndexes: file_calculator_proto_depIdxs,
-		EnumInfos:         file_calculator_proto_enumTypes,
 		MessageInfos:      file_calculator_proto_msgTypes,
 	}.Build()
 	File_calculator_proto = out.File

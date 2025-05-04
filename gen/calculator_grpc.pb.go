@@ -25,6 +25,8 @@ const (
 // CalculatorClient is the client API for Calculator service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Переделать на двунаправленные стримы
 type CalculatorClient interface {
 	Execute(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
 }
@@ -50,6 +52,8 @@ func (c *calculatorClient) Execute(ctx context.Context, in *Request, opts ...grp
 // CalculatorServer is the server API for Calculator service.
 // All implementations must embed UnimplementedCalculatorServer
 // for forward compatibility.
+//
+// Переделать на двунаправленные стримы
 type CalculatorServer interface {
 	Execute(context.Context, *Request) (*Response, error)
 	mustEmbedUnimplementedCalculatorServer()
