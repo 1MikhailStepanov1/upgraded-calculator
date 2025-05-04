@@ -15,8 +15,8 @@ message Operation {
   string type = 1;
   optional string op = 2;
   string var = 3;
-  optional Operand left_operand = 4;
-  optional Operand right_operand = 5;
+  optional Operand left = 4;
+  optional Operand right = 5;
 }
 
 message Request {

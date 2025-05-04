@@ -8,7 +8,6 @@ import (
 	"os"
 	cfg "upgraded-calculator/internal/config"
 	calculatorGrpcServer "upgraded-calculator/internal/grpc"
-	//calculatorHttpServer "upgraded-calculator/internal/http"
 )
 
 const (
@@ -28,15 +27,15 @@ func main() {
 	logger := setupLogger(config.App.LogLevel)
 	//ctx := context.Background()
 
-	// Initializing HTTP server
+	//Initializing HTTP server
 	//httpServer, httpServerContext := calculatorHttpServer.CreateServer(config, logger, ctx)
 	//logger.Info("HTTP Server started")
 	//err := httpServer.ListenAndServe()
 	//if err != nil && err != http.ErrServerClosed {
 	//	logger.Error(err.Error())
 	//}
-	//
 	//<-httpServerContext.Done()
+
 	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", config.App.GRPCPort))
 	if err != nil {
 		logger.Error("Failed to listen GRPC server: %v", err.Error())

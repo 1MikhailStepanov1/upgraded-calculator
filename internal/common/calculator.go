@@ -47,9 +47,7 @@ func (calcGRPC *CalculatorGRPCHandler) Execute(ctx context.Context, req *gen.Req
 	c := Calculator{logger: calcGRPC.logger}
 	// Parsing operations from request
 	var ops []Operation
-	calcGRPC.logger.Debug(fmt.Sprintf("req ops len %d", len(req.Operation)))
 	for _, op := range req.GetOperation() {
-		calcGRPC.logger.Debug(fmt.Sprintf("Deserialized operations: %+v", req))
 		if validatedOp, err := calcGRPC.validateAndParseOperation(op); err == nil {
 			ops = append(ops, *validatedOp)
 		} else {
@@ -69,7 +67,6 @@ func (calcGRPC *CalculatorGRPCHandler) Execute(ctx context.Context, req *gen.Req
 func (calcGRPC *CalculatorGRPCHandler) validateAndParseOperation(op *gen.Operation) (*Operation, error) {
 	result := Operation{}
 	result.Var = op.Var
-	calcGRPC.logger.Debug(fmt.Sprintf("Deserialized operation: %+v", op))
 	switch OperationType(op.Type) {
 	case CalcOperation:
 		result.Type = OperationType(op.Type)
@@ -83,14 +80,14 @@ func (calcGRPC *CalculatorGRPCHandler) validateAndParseOperation(op *gen.Operati
 			return nil, errors.New("invalid operation type from request")
 		}
 
-		switch v := op.LeftOperand.GetValue().(type) {
+		switch v := op.Left.GetValue().(type) {
 		case *gen.Operand_Number:
 			result.Left = &Operand{IntValue: &v.Number, StringValue: nil}
 		case *gen.Operand_Variable:
 			result.Left = &Operand{IntValue: nil, StringValue: &v.Variable}
 		}
 
-		switch v := op.RightOperand.GetValue().(type) {
+		switch v := op.Right.GetValue().(type) {
 		case *gen.Operand_Number:
 			result.Right = &Operand{IntValue: &v.Number, StringValue: nil}
 		case *gen.Operand_Variable:
@@ -101,15 +98,19 @@ func (calcGRPC *CalculatorGRPCHandler) validateAndParseOperation(op *gen.Operati
 	default:
 		return nil, errors.New("invalid operation type from request")
 	}
-	calcGRPC.logger.Debug(fmt.Sprintf("Deserialized operation: %+v", op))
+	calcGRPC.logger.Debug(fmt.Sprintf("operation: %+v", op))
+	calcGRPC.logger.Debug(fmt.Sprintf("deserialization result - var: %+v", result.Var))
 	return &result, nil
 }
 
 func (calcGRPC *CalculatorGRPCHandler) formResponse(outputList []PrintOutput) ([]*gen.Variable, error) {
-	result := make([]*gen.Variable, len(outputList))
+	result := make([]*gen.Variable, 0, len(outputList))
+	calcGRPC.logger.Debug(fmt.Sprintf("outputlist len %d", len(outputList)))
 	for _, op := range outputList {
+		calcGRPC.logger.Debug(fmt.Sprintf("op: %+v", op))
 		result = append(result, &gen.Variable{Var: op.Var, Value: op.Value})
 	}
+	calcGRPC.logger.Debug(fmt.Sprintf("outputlist len %d", len(result)))
 	return result, nil
 }
 

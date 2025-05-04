@@ -108,8 +108,8 @@ type Operation struct {
 	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
 	Op            *string                `protobuf:"bytes,2,opt,name=op,proto3,oneof" json:"op,omitempty"`
 	Var           string                 `protobuf:"bytes,3,opt,name=var,proto3" json:"var,omitempty"`
-	LeftOperand   *Operand               `protobuf:"bytes,4,opt,name=left_operand,json=leftOperand,proto3,oneof" json:"left_operand,omitempty"`
-	RightOperand  *Operand               `protobuf:"bytes,5,opt,name=right_operand,json=rightOperand,proto3,oneof" json:"right_operand,omitempty"`
+	Left          *Operand               `protobuf:"bytes,4,opt,name=left,proto3,oneof" json:"left,omitempty"`
+	Right         *Operand               `protobuf:"bytes,5,opt,name=right,proto3,oneof" json:"right,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -165,16 +165,16 @@ func (x *Operation) GetVar() string {
 	return ""
 }
 
-func (x *Operation) GetLeftOperand() *Operand {
+func (x *Operation) GetLeft() *Operand {
 	if x != nil {
-		return x.LeftOperand
+		return x.Left
 	}
 	return nil
 }
 
-func (x *Operation) GetRightOperand() *Operand {
+func (x *Operation) GetRight() *Operand {
 	if x != nil {
-		return x.RightOperand
+		return x.Right
 	}
 	return nil
 }
@@ -328,16 +328,16 @@ const file_calculator_proto_rawDesc = "" +
 	"\aOperand\x12\x18\n" +
 	"\x06number\x18\x01 \x01(\x03H\x00R\x06number\x12\x1c\n" +
 	"\bvariable\x18\x02 \x01(\tH\x00R\bvariableB\a\n" +
-	"\x05value\"\xec\x01\n" +
+	"\x05value\"\xbe\x01\n" +
 	"\tOperation\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x13\n" +
 	"\x02op\x18\x02 \x01(\tH\x00R\x02op\x88\x01\x01\x12\x10\n" +
-	"\x03var\x18\x03 \x01(\tR\x03var\x12;\n" +
-	"\fleft_operand\x18\x04 \x01(\v2\x13.calculator.OperandH\x01R\vleftOperand\x88\x01\x01\x12=\n" +
-	"\rright_operand\x18\x05 \x01(\v2\x13.calculator.OperandH\x02R\frightOperand\x88\x01\x01B\x05\n" +
-	"\x03_opB\x0f\n" +
-	"\r_left_operandB\x10\n" +
-	"\x0e_right_operand\">\n" +
+	"\x03var\x18\x03 \x01(\tR\x03var\x12,\n" +
+	"\x04left\x18\x04 \x01(\v2\x13.calculator.OperandH\x01R\x04left\x88\x01\x01\x12.\n" +
+	"\x05right\x18\x05 \x01(\v2\x13.calculator.OperandH\x02R\x05right\x88\x01\x01B\x05\n" +
+	"\x03_opB\a\n" +
+	"\x05_leftB\b\n" +
+	"\x06_right\">\n" +
 	"\aRequest\x123\n" +
 	"\toperation\x18\x01 \x03(\v2\x15.calculator.OperationR\toperation\"2\n" +
 	"\bVariable\x12\x10\n" +
@@ -370,8 +370,8 @@ var file_calculator_proto_goTypes = []any{
 	(*Response)(nil),  // 4: calculator.Response
 }
 var file_calculator_proto_depIdxs = []int32{
-	0, // 0: calculator.Operation.left_operand:type_name -> calculator.Operand
-	0, // 1: calculator.Operation.right_operand:type_name -> calculator.Operand
+	0, // 0: calculator.Operation.left:type_name -> calculator.Operand
+	0, // 1: calculator.Operation.right:type_name -> calculator.Operand
 	1, // 2: calculator.Request.operation:type_name -> calculator.Operation
 	3, // 3: calculator.Response.items:type_name -> calculator.Variable
 	2, // 4: calculator.Calculator.Execute:input_type -> calculator.Request
