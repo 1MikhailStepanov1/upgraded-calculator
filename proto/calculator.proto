@@ -32,7 +32,6 @@ message Response {
   repeated Variable items = 1;
 }
 
-// Переделать на двунаправленные стримы
 service Calculator{
   rpc Execute(Request) returns (Response);
 }

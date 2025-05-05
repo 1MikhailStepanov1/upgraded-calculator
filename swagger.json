@@ -1,0 +1,42 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API to execute operations of Upgraded calculator service",
+        "title": "Upgraded Calculator API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.pipipupu.io/support",
+            "email": "support@pipipupu.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "schemes": ["http"],
+    "paths": {
+        "/execute": {
+            "post": {
+                "summary": "Execute given calculator operation",
+                "responses": {
+                    "200": {
+                        "description": "Successful execute of operation",
+                        "schema": {
+
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input operation"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        }
+    }
+}

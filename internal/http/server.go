@@ -28,16 +28,26 @@ func CreateServer(
 	router := chi.NewRouter()
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Logger)
-	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
+	router.Post("/execute", func(w http.ResponseWriter, r *http.Request) {
 		// TODO убрать перевод в байты вместе с шаблоном фасада
 		bodyInBytes, err := io.ReadAll(r.Body)
 		response, err := calculator.ExecuteHTTP(ctx, bodyInBytes)
 		if err != nil {
 			// TODO Сделать отсылку разных кодов ответа на разные ошибки
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		w.Write(response)
+	})
+
+	router.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set("Access-control-allow-origin", "*")
+		_, err := w.Write([]byte(swaggerUIHTML()))
+		if err != nil {
+			logger.Error("Failed to write docs page:", err.Error())
+		}
 	})
 
 	// Creating server instance
@@ -65,4 +75,34 @@ func CreateServer(
 	}()
 
 	return server, serverCtx
+}
+
+func swaggerUIHTML() string {
+	return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculator API Documentation</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css">
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
+    <script>
+        window.onload = function() {
+            window.ui = SwaggerUIBundle({
+                url: "/swagger.json",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIBundle.SwaggerUIStandalonePreset
+                ],
+                layout: "BaseLayout",
+
+            });
+        };
+    </script>
+</body>
+</html>`
 }
