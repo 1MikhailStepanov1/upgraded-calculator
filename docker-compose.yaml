@@ -24,5 +24,5 @@ services:
       GRPC_APP_PORT: ${GRPC_APP_PORT:-8081}
       GRPC_APP_TIMEOUT: ${GRPC_APP_TIMEOUT:-3}
       GRPC_SHUTDOWN_TIMEOUT: ${GRPC_SHUTDOWN_TIMEOUT:-5}
-      LOG_LEVEL: ${LOG_LEVEL:-PROD}
+      LOG_LEVEL: ${LOG_LEVEL:-"PROD"}
     restart: unless-stopped

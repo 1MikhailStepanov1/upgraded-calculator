@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"time"
 )
 
 type UpgradedCalculator struct {
@@ -57,6 +58,8 @@ func (c *UpgradedCalculator) Execute(operations []Operation) ([]PrintOutput, err
 						Value: value,
 					})
 					resultMu.Unlock()
+				} else {
+					errorsCh <- err
 				}
 				c.logger.Debug("Print operation", "request_id", c.requestId, "operation", op)
 			default:
@@ -138,8 +141,23 @@ func (c *UpgradedCalculator) subscribeVariable(name string) (int64, error) {
 	c.subs[name] = append(c.subs[name], ch)
 	c.mutex.Unlock()
 
-	val := <-ch
-	return val, nil
+	select {
+	case val := <-ch:
+		return val, nil
+	case <-time.After(2 * time.Second):
+		c.mutex.Lock()
+		for i, subCh := range c.subs[name] {
+			if subCh == ch {
+				c.subs[name] = append(c.subs[name][:i], c.subs[name][i+1:]...)
+				break
+			}
+		}
+		if len(c.subs[name]) == 0 {
+			delete(c.subs, name)
+		}
+		c.mutex.Unlock()
+		return 0, fmt.Errorf("variable '%s' is uncomputable", name)
+	}
 }
 
 func (c *UpgradedCalculator) publishVariable(name string, value int64) error {

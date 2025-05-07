@@ -17,7 +17,7 @@ FROM alpine:3.21
 WORKDIR /root/
 
 COPY --from=builder /app/http .
-COPY swagger.json .
+COPY swagger.json /app/http/swagger.json
 
 EXPOSE 8080
 

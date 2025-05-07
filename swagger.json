@@ -61,21 +61,6 @@
             "enum": ["+", "-", "*", "/"],
             "description": "Available calculator operations"
         },
-        "Operand": {
-            "type": "object",
-            "properties": {
-                "IntValue": {
-                    "type": "integer",
-                    "format": "int64",
-                    "x-nullable": true
-                },
-                "StringValue": {
-                    "type": "string",
-                    "x-nullable": true
-                }
-            },
-            "description": "Operand can be either integer or string variable name"
-        },
         "Operation": {
             "type": "object",
             "required": ["type", "var"],
@@ -92,11 +77,11 @@
                     "description": "Variable name to store result or to print"
                 },
                 "left": {
-                    "$ref": "#/definitions/Operand",
+                    "type": ["string", "number"],
                     "description": "Left operand (for 'calc' operations)"
                 },
                 "right": {
-                    "$ref": "#/definitions/Operand",
+                    "type": ["string", "number"],
                     "description": "Right operand (for 'calc' operations)"
                 }
             }

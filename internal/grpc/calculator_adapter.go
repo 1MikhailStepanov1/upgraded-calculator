@@ -34,6 +34,7 @@ func (ca *CalculatorGRPC) Execute(
 	formedResponse, _ := ca.formResponse(result)
 	resp := &gen.Response{Items: formedResponse}
 	ca.logger.Info("Response formed", "request_id", ctx.Value("request_id").(string))
+	c = nil
 	return resp, nil
 }
 

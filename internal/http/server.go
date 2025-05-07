@@ -35,8 +35,8 @@ func CreateServer(
 
 		response, err := calculator.Execute(ctx, bodyInBytes)
 		if err != nil {
-			w.Write([]byte(err.Error()))
 			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
 			return
 		}
 		w.Write(response)
@@ -45,6 +45,10 @@ func CreateServer(
 	router.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("/swagger.json"),
 	))
+
+	router.Get("/swagger.json", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, config.App.SwaggerPath)
+	})
 
 	// Creating server instance
 	server := &http.Server{Addr: fmt.Sprintf("0.0.0.0:%d", config.App.HTTPPort), Handler: router}
