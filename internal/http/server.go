@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/google/uuid"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"io"
 	"log/slog"
 	"net/http"
@@ -12,7 +14,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	"upgraded-calculator/internal/common"
 	"upgraded-calculator/internal/config"
 )
 
@@ -22,18 +23,18 @@ func CreateServer(
 	ctx context.Context,
 ) (*http.Server, context.Context) {
 
-	calculator := common.NewCalculatorFacade(logger)
+	calculator := CalculatorHTTP{logger: logger}
 
 	// Initializing router
 	router := chi.NewRouter()
-	router.Use(middleware.RequestID)
 	router.Use(middleware.Logger)
 	router.Post("/execute", func(w http.ResponseWriter, r *http.Request) {
-		// TODO убрать перевод в байты вместе с шаблоном фасада
 		bodyInBytes, err := io.ReadAll(r.Body)
-		response, err := calculator.ExecuteHTTP(ctx, bodyInBytes)
+
+		ctx = context.WithValue(ctx, "request_id", uuid.New().String())
+
+		response, err := calculator.Execute(ctx, bodyInBytes)
 		if err != nil {
-			// TODO Сделать отсылку разных кодов ответа на разные ошибки
 			w.Write([]byte(err.Error()))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -41,19 +42,13 @@ func CreateServer(
 		w.Write(response)
 	})
 
-	router.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html")
-		w.Header().Set("Access-control-allow-origin", "*")
-		_, err := w.Write([]byte(swaggerUIHTML()))
-		if err != nil {
-			logger.Error("Failed to write docs page:", err.Error())
-		}
-	})
+	router.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger.json"),
+	))
 
 	// Creating server instance
 	server := &http.Server{Addr: fmt.Sprintf("0.0.0.0:%d", config.App.HTTPPort), Handler: router}
 
-	// Graceful shutdown handler
 	serverCtx, serverStop := context.WithCancel(ctx)
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
@@ -71,38 +66,9 @@ func CreateServer(
 		if err != nil {
 			logger.Error(err.Error())
 		}
+		logger.Info("Shutting down server")
 		serverStop()
 	}()
 
 	return server, serverCtx
-}
-
-func swaggerUIHTML() string {
-	return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Calculator API Documentation</title>
-    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css">
-</head>
-<body>
-    <div id="swagger-ui"></div>
-    <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
-    <script>
-        window.onload = function() {
-            window.ui = SwaggerUIBundle({
-                url: "/swagger.json",
-                dom_id: '#swagger-ui',
-                deepLinking: true,
-                presets: [
-                    SwaggerUIBundle.presets.apis,
-                    SwaggerUIBundle.SwaggerUIStandalonePreset
-                ],
-                layout: "BaseLayout",
-
-            });
-        };
-    </script>
-</body>
-</html>`
 }

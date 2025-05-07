@@ -3,7 +3,6 @@ package common
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -69,7 +68,6 @@ func (op *Operand) UnmarshalJSON(b []byte) error {
 		*op = Operand{IntValue: nil, StringValue: &s}
 		return nil
 	}
-	fmt.Printf("%+v", *op)
 	return errors.New("invalid type of operand")
 }
 

@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 	"log"
@@ -11,7 +12,6 @@ import (
 	"syscall"
 	"time"
 	"upgraded-calculator/gen"
-	"upgraded-calculator/internal/common"
 	"upgraded-calculator/internal/config"
 )
 
@@ -21,7 +21,7 @@ type serverAPI struct {
 }
 
 type Calculator interface {
-	ExecuteGRPC(
+	Execute(
 		ctx context.Context,
 		request *gen.Request,
 	) (response *gen.Response, err error)
@@ -35,7 +35,8 @@ func (s *serverAPI) Execute(
 	ctx context.Context,
 	request *gen.Request,
 ) (response *gen.Response, err error) {
-	resp, err := s.calculator.ExecuteGRPC(ctx, request)
+	ctx = context.WithValue(ctx, "request_id", uuid.New().String())
+	resp, err := s.calculator.Execute(ctx, request)
 	return resp, err
 }
 
@@ -43,7 +44,7 @@ func CreateServer(
 	config *config.Config,
 	logger *slog.Logger,
 ) *grpc.Server {
-	calculator := common.NewCalculatorFacade(logger)
+	calculator := &CalculatorGRPC{logger: logger}
 
 	grpcServer := grpc.NewServer(grpc.KeepaliveParams(keepalive.ServerParameters{Timeout: config.App.GRPCTimeout}))
 	RegisterGRPCServer(grpcServer, calculator)

@@ -1,19 +1,9 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "API to execute operations of Upgraded calculator service",
-        "title": "Upgraded Calculator API",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.pipipupu.io/support",
-            "email": "support@pipipupu.io"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
-        "version": "1.0"
+        "title": "Calculator API",
+        "description": "API for executing calculator operations",
+        "version": "1.0.0"
     },
     "host": "localhost:8080",
     "basePath": "/",
@@ -21,20 +11,107 @@
     "paths": {
         "/execute": {
             "post": {
-                "summary": "Execute given calculator operation",
+                "tags": ["Calculator"],
+                "summary": "Execute calculator operations",
+                "description": "Accepts a list of operations to execute (calculation or printing)",
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "operations",
+                        "description": "List of operations to execute",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Operation"
+                            }
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Successful execute of operation",
+                        "description": "Successful execution",
                         "schema": {
-
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/PrintOutput"
+                            }
                         }
                     },
                     "400": {
-                        "description": "Invalid input operation"
+                        "description": "Invalid input data"
                     },
                     "500": {
                         "description": "Internal server error"
                     }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "OperationType": {
+            "type": "string",
+            "enum": ["calc", "print"],
+            "description": "Type of operation"
+        },
+        "CalcAvailableOperation": {
+            "type": "string",
+            "enum": ["+", "-", "*", "/"],
+            "description": "Available calculator operations"
+        },
+        "Operand": {
+            "type": "object",
+            "properties": {
+                "IntValue": {
+                    "type": "integer",
+                    "format": "int64",
+                    "x-nullable": true
+                },
+                "StringValue": {
+                    "type": "string",
+                    "x-nullable": true
+                }
+            },
+            "description": "Operand can be either integer or string variable name"
+        },
+        "Operation": {
+            "type": "object",
+            "required": ["type", "var"],
+            "properties": {
+                "type": {
+                    "$ref": "#/definitions/OperationType"
+                },
+                "op": {
+                    "$ref": "#/definitions/CalcAvailableOperation",
+                    "description": "Required only for 'calc' operations"
+                },
+                "var": {
+                    "type": "string",
+                    "description": "Variable name to store result or to print"
+                },
+                "left": {
+                    "$ref": "#/definitions/Operand",
+                    "description": "Left operand (for 'calc' operations)"
+                },
+                "right": {
+                    "$ref": "#/definitions/Operand",
+                    "description": "Right operand (for 'calc' operations)"
+                }
+            }
+        },
+        "PrintOutput": {
+            "type": "object",
+            "properties": {
+                "var": {
+                    "type": "string",
+                    "description": "Variable name that was printed"
+                },
+                "value": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Variable value"
                 }
             }
         }

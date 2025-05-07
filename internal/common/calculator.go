@@ -1,210 +1,164 @@
 package common
 
 import (
-	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
-	"upgraded-calculator/gen"
+	"sync"
 )
 
-// HTTP обвязка
-type CalculatorHTTPHandler struct {
-	logger *slog.Logger
+type UpgradedCalculator struct {
+	logger    *slog.Logger
+	requestId string
+	variables map[string]int64
+	subs      map[string][]chan int64
+	mutex     sync.RWMutex
 }
 
-func (a *CalculatorHTTPHandler) Execute(ctx context.Context, data []byte) ([]byte, error) {
-	a.logger.Info("Processing HTTP request")
-	c := Calculator{logger: a.logger}
-
-	var req []Operation
-	err := json.Unmarshal(data, &req)
-	if err != nil {
-		a.logger.Error(err.Error())
-		return nil, err
-	}
-	for _, op := range req {
-		a.logger.Debug(fmt.Sprintf("Deserialized operation: %+v", op))
-	}
-
-	resp, err := c.Execute(ctx, req)
-	if err != nil {
-		a.logger.Error(err.Error())
-		return nil, err
-	}
-	a.logger.Info("Request finished")
-	return json.Marshal(resp)
-}
-
-// GRPC обвязка
-type CalculatorGRPCHandler struct {
-	logger *slog.Logger
-}
-
-func (calcGRPC *CalculatorGRPCHandler) Execute(ctx context.Context, req *gen.Request) (*gen.Response, error) {
-	calcGRPC.logger.Info("Processing request with request_id", "request_id", ctx.Value("request_id"))
-	c := Calculator{logger: calcGRPC.logger}
-	// Parsing operations from request
-	var ops []Operation
-	for _, op := range req.GetOperation() {
-		if validatedOp, err := calcGRPC.validateAndParseOperation(op); err == nil {
-			ops = append(ops, *validatedOp)
-		} else {
-			c.logger.Error(err.Error())
-		}
-	}
-	output, err := c.Execute(ctx, ops)
-	if err != nil {
-		calcGRPC.logger.Error(err.Error())
-		return nil, err
-	}
-	formedResponse, _ := calcGRPC.formResponse(output)
-	resp := &gen.Response{Items: formedResponse}
-	return resp, nil
-}
-
-func (calcGRPC *CalculatorGRPCHandler) validateAndParseOperation(op *gen.Operation) (*Operation, error) {
-	result := Operation{}
-	result.Var = op.Var
-	switch OperationType(op.Type) {
-	case CalcOperation:
-		result.Type = OperationType(op.Type)
-		if op.Op == nil {
-			return nil, errors.New("operation cannot be nil")
-		}
-		switch CalcAvailableOperation(*op.Op) {
-		case Add, Sub, Mul, Div:
-			result.Op = CalcAvailableOperation(*op.Op)
-		default:
-			return nil, errors.New("invalid operation type from request")
-		}
-
-		switch v := op.Left.GetValue().(type) {
-		case *gen.Operand_Number:
-			result.Left = &Operand{IntValue: &v.Number, StringValue: nil}
-		case *gen.Operand_Variable:
-			result.Left = &Operand{IntValue: nil, StringValue: &v.Variable}
-		}
-
-		switch v := op.Right.GetValue().(type) {
-		case *gen.Operand_Number:
-			result.Right = &Operand{IntValue: &v.Number, StringValue: nil}
-		case *gen.Operand_Variable:
-			result.Right = &Operand{IntValue: nil, StringValue: &v.Variable}
-		}
-	case PrintOperation:
-		result.Type = OperationType(op.Type)
-	default:
-		return nil, errors.New("invalid operation type from request")
-	}
-	calcGRPC.logger.Debug(fmt.Sprintf("operation: %+v", op))
-	calcGRPC.logger.Debug(fmt.Sprintf("deserialization result - var: %+v", result.Var))
-	return &result, nil
-}
-
-func (calcGRPC *CalculatorGRPCHandler) formResponse(outputList []PrintOutput) ([]*gen.Variable, error) {
-	result := make([]*gen.Variable, 0, len(outputList))
-	calcGRPC.logger.Debug(fmt.Sprintf("outputlist len %d", len(outputList)))
-	for _, op := range outputList {
-		calcGRPC.logger.Debug(fmt.Sprintf("op: %+v", op))
-		result = append(result, &gen.Variable{Var: op.Var, Value: op.Value})
-	}
-	calcGRPC.logger.Debug(fmt.Sprintf("outputlist len %d", len(result)))
-	return result, nil
-}
-
-// Общий фасад калькулятора
-type CalculatorFacade struct {
-	logger      *slog.Logger
-	httpHandler CalculatorHTTPHandler
-	grpcHandler CalculatorGRPCHandler
-}
-
-func NewCalculatorFacade(logger *slog.Logger) *CalculatorFacade {
-	return &CalculatorFacade{
-		logger:      logger,
-		httpHandler: CalculatorHTTPHandler{logger: logger},
-		grpcHandler: CalculatorGRPCHandler{logger: logger},
+func NewUpgradedCalculator(
+	logger *slog.Logger,
+	requestId string,
+) *UpgradedCalculator {
+	return &UpgradedCalculator{
+		logger:    logger,
+		requestId: requestId,
+		variables: make(map[string]int64),
+		subs:      make(map[string][]chan int64),
 	}
 }
 
-func (c *CalculatorFacade) ExecuteHTTP(ctx context.Context, input []byte) ([]byte, error) {
-	return c.httpHandler.Execute(ctx, input)
-}
+func (c *UpgradedCalculator) Execute(operations []Operation) ([]PrintOutput, error) {
+	var (
+		result   []PrintOutput
+		resultMu sync.Mutex
+		wg       sync.WaitGroup
+		errorsCh = make(chan error, len(operations))
+	)
+	defer close(errorsCh)
 
-func (c *CalculatorFacade) ExecuteGRPC(ctx context.Context, request *gen.Request) (*gen.Response, error) {
-	return c.grpcHandler.Execute(ctx, request)
-}
+	wg.Add(len(operations))
+	c.logger.Debug("Operations to execute", "request_id", c.requestId, "length", len(operations))
+	for _, op := range operations {
+		go func(op Operation) {
+			defer wg.Done()
+			var err error
 
-type Calculator struct {
-	logger *slog.Logger
-}
-
-func (c *Calculator) Execute(ctx context.Context, operations []Operation) ([]PrintOutput, error) {
-	// business logic of adapter
-	// Lazy init - делать мапу переменных в рамках "адаптера".
-	// В рамках мапы хранятся ссылки на память, где лежат значения переменных
-	// Сделать одну операцию подсчета, которая будет складывать значения по ссылкам
-	// И вторая операция - формирование ответа по порядку вызовов print, разыменовывая ссылки
-	results := map[string]*int64{}
-	var resultOrder []string
-	for _, operation := range operations {
-		switch operation.Type {
-		case CalcOperation:
-			computeResult, err := c.computeCalcOperation(&results, operation)
-			if err != nil {
-				// TODO сделать корректную ошибку
-				fmt.Print("vse ploho")
-			} else {
-				results[operation.Var] = computeResult
+			switch op.Type {
+			case CalcOperation:
+				err = c.compute(op)
+				c.logger.Debug("Compute operation", "request_id", c.requestId, "operation", op)
+			case PrintOperation:
+				var value int64
+				value, err = c.subscribeVariable(op.Var)
+				if err == nil {
+					resultMu.Lock()
+					result = append(result, PrintOutput{
+						Var:   op.Var,
+						Value: value,
+					})
+					resultMu.Unlock()
+				}
+				c.logger.Debug("Print operation", "request_id", c.requestId, "operation", op)
+			default:
+				err = errors.New("invalid operation")
 			}
-		case PrintOperation:
-			resultOrder = append(resultOrder, operation.Var)
-		default: // TODO сделать корректную ошибку
-		}
+
+			if err != nil {
+				errorsCh <- err
+			}
+		}(op)
 	}
-	result := []PrintOutput{}
-	for _, variableToPrint := range resultOrder {
-		resultVar := PrintOutput{
-			Var:   variableToPrint,
-			Value: *results[variableToPrint],
-		}
-		result = append(result, resultVar)
+
+	wg.Wait()
+
+	c.logger.Debug("All operations executed", "request_id", c.requestId)
+	select {
+	case err := <-errorsCh:
+		return nil, err
+	default:
+		return result, nil
 	}
-	return result, nil
 }
 
-func (c *Calculator) computeCalcOperation(variableValues *map[string]*int64, operation Operation) (*int64, error) {
-	//TODO обработка ошибок, если в мапе нет такой переменной
-	var leftValue, rightValue int64
-	if operation.Left.IntValue != nil {
-		leftValue = *operation.Left.IntValue
-	} else if operation.Left.StringValue != nil {
-		leftValue = *(*variableValues)[*operation.Left.StringValue]
-	} else {
-		return nil, errors.New("invalid operand")
+func (c *UpgradedCalculator) compute(operation Operation) error {
+	leftValue, err := c.getOperandValue(*operation.Left)
+	if err != nil {
+		return err
+	}
+	c.logger.Debug("Operand value", "left", leftValue)
+
+	rightValue, err := c.getOperandValue(*operation.Right)
+	if err != nil {
+		return err
 	}
 
-	if operation.Right.IntValue != nil {
-		rightValue = *operation.Right.IntValue
-	} else if operation.Right.StringValue != nil {
-		rightValue = *(*variableValues)[*operation.Right.StringValue]
-	} else {
-		return nil, errors.New("invalid operand")
-	}
+	c.logger.Debug("Operand value", "right", rightValue)
 
-	result := new(int64)
+	var res int64
 	switch operation.Op {
 	case "+":
-		*result = leftValue + rightValue
+		res = leftValue + rightValue
 	case "-":
-		*result = leftValue - rightValue
+		res = leftValue - rightValue
 	case "*":
-		*result = leftValue * rightValue
+		res = leftValue * rightValue
 	case "/":
-		*result = leftValue / rightValue
+		if rightValue == 0 {
+			return errors.New("division by zero")
+		}
+		res = leftValue / rightValue
+	default:
+		return errors.New("invalid operation")
 	}
-	c.logger.Debug(fmt.Sprintf("Result: %d", *result))
-	return result, nil
+
+	return c.publishVariable(operation.Var, res)
+}
+
+func (c *UpgradedCalculator) getOperandValue(op Operand) (int64, error) {
+	if op.IntValue != nil {
+		return *op.IntValue, nil
+	}
+	if op.StringValue != nil {
+		return c.subscribeVariable(*op.StringValue)
+	}
+	return 0, errors.New("invalid operand")
+}
+
+func (c *UpgradedCalculator) subscribeVariable(name string) (int64, error) {
+	c.mutex.RLock()
+	if val, exists := c.variables[name]; exists {
+		c.mutex.RUnlock()
+		return val, nil
+	}
+	c.mutex.RUnlock()
+
+	ch := make(chan int64, 1)
+
+	c.mutex.Lock()
+	c.subs[name] = append(c.subs[name], ch)
+	c.mutex.Unlock()
+
+	val := <-ch
+	return val, nil
+}
+
+func (c *UpgradedCalculator) publishVariable(name string, value int64) error {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	if _, exists := c.variables[name]; exists {
+		return fmt.Errorf("variable %s already set", name)
+	}
+
+	c.variables[name] = value
+
+	if subscribers, ok := c.subs[name]; ok {
+		for _, ch := range subscribers {
+			ch <- value
+			close(ch)
+		}
+		delete(c.subs, name)
+	}
+
+	return nil
 }
