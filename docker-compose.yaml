@@ -6,7 +6,7 @@ services:
       dockerfile: http.Dockerfile
     container_name: calculator-http
     ports:
-      - "8080:8080"
+      - "8080:${HTTP_APP_PORT:-8080}"
     environment:
       HTTP_APP_PORT: ${HTTP_APP_PORT:-8080}
       HTTP_SHUTDOWN_TIMEOUT: ${HTTP_SHUTDOWN_TIMEOUT:-10}
@@ -19,7 +19,7 @@ services:
       dockerfile: grpc.Dockerfile
     container_name: calculator-grpc
     ports:
-      - "8081:8081"
+      - "8081:${GRPC_APP_PORT:-8081}"
     environment:
       GRPC_APP_PORT: ${GRPC_APP_PORT:-8081}
       GRPC_APP_TIMEOUT: ${GRPC_APP_TIMEOUT:-3}

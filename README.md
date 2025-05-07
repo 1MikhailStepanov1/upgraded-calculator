@@ -8,7 +8,7 @@
 Основной процесс происходит путем передачи списка операций в метод `Execute` у сущности улучшенного калькулятора. Данный
 метод параллельно выполняет операции вычислений и выводов.
 
-Хранение значений переменных происходит внутри сущности в поле `varialbes`.
+Хранение значений переменных происходит внутри калькулятора в поле `varialbes`.
 
 Для взаимодействия операциями "по готовности" был использован паттерн `Pub-Sub` - если для текущего исполняемого
 вычисления необходима переменная, которой не было еще определено значение в поле `varialbes`, то создается канал.
@@ -17,15 +17,63 @@
 
 ### Запуск
 
+Compose файл использует переменные, указанные в .env файле. При изменении портов для корректной работы приложения могут
+понадобится доработки compose файла.
+
+**Environment variables**
+
+- `HTTP_APP_PORT` - порт запуска HTTP интерфейса
+- `HTTP_SHUTDOWN_TIMEOUT` - таймаут в секундах до принудительного завершения работы HTTP интерфейса
+- `GRPC_APP_PORT` - порт запуска GRPC интерфейса
+- `GRPC_APP_TIMEOUT` - таймаут в секундах до принудительного завершения запроса GRPC
+- `GRPC_SHUTDOWN_TIMEOUT` - таймаут в секундах до принудительного завершения работы GRPC интерфейса
+- `LOG_LEVEL` - уровень логирования приложения. Доступно два значения - `LOCAL` и `PROD`
+
 **HTTP server with swagger**
+
 ```shell
 docker compose build calculator-http
 docker compose up -d calculator-http
 ```
 
-**GRPC server with swagger**
+**GRPC server**
+
 ```shell
 docker compose build calculator-grpc
 docker compose up -d calculator-grpc
+```
+
+**HTTP + GRPC**
+
+```shell
+docker compose up -d
+```
+
+### Использование
+
+**Swagger Documentation**
+
+GET http://localhost:8080/swagger
+
+**REST API**
+
+POST http://localhost:8080/execute
+
+Пример данных для отправки:
+
+```json
+[
+  {
+    "type": "calc",
+    "var": "x",
+    "op": "+",
+    "left": "3",
+    "right": "8"
+  },
+  {
+    "type": "print",
+    "var": "x"
+  }
+]
 ```
 
