@@ -2,11 +2,11 @@ FROM golang:1.23.8-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
-COPY cmd ./cmd
-COPY internal ./internal
-COPY gen ./gen
-COPY proto ./proto
+COPY ../go.mod go.sum ./
+COPY ../cmd ./cmd
+COPY ../internal ./internal
+COPY ../gen ./gen
+COPY ../proto ./proto
 
 RUN go mod download
 
@@ -17,7 +17,7 @@ FROM alpine:3.21
 WORKDIR /root/
 
 COPY --from=builder /app/http .
-COPY swagger.json /app/http/swagger.json
+COPY ../api/swagger.json /app/http/swagger.json
 
 EXPOSE 8080
 

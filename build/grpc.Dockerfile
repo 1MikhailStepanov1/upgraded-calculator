@@ -2,11 +2,11 @@ FROM golang:1.23.8-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
-COPY cmd ./cmd
-COPY internal ./internal
-COPY gen ./gen
-COPY proto ./proto
+COPY ../go.mod go.sum ./
+COPY ../cmd ./cmd
+COPY ../internal ./internal
+COPY ../gen ./gen
+COPY ../proto ./proto
 
 RUN go mod download
 

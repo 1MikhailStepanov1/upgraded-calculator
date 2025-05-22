@@ -2,8 +2,8 @@ version: "3"
 services:
   calculator-http:
     build:
-      context: .
-      dockerfile: http.Dockerfile
+      context: ..
+      dockerfile: ../build/http.Dockerfile
     container_name: calculator-http
     ports:
       - "8080:${HTTP_APP_PORT:-8080}"
@@ -15,8 +15,8 @@ services:
 
   calculator-grpc:
     build:
-      context: .
-      dockerfile: grpc.Dockerfile
+      context: ..
+      dockerfile: ../build/grpc.Dockerfile
     container_name: calculator-grpc
     ports:
       - "8081:${GRPC_APP_PORT:-8081}"

@@ -62,7 +62,7 @@ func CreateServer(
 		go func() {
 			<-shutdownCtx.Done()
 			if shutdownCtx.Err() == context.DeadlineExceeded {
-				logger.Error("Graceful shutdown timed out.. forcing exit.")
+				logger.Error("Graceful shutdown HTTP server timed out.. forcing exit.")
 			}
 		}()
 
@@ -70,8 +70,9 @@ func CreateServer(
 		if err != nil {
 			logger.Error(err.Error())
 		}
-		logger.Info("Shutting down server")
+		logger.Info("Shutting down HTTP server")
 		serverStop()
+		logger.Info("HTTP Server stopped")
 	}()
 
 	return server, serverCtx

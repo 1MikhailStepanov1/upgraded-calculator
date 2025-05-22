@@ -55,12 +55,12 @@ func CreateServer(
 		<-sig
 		logger.Info("Initiating GRPC shutdown...")
 		timer := time.AfterFunc(config.App.GRPCShutdownTimeout*time.Second, func() {
-			log.Println("Server couldn't stop gracefully in time. Doing force stop.")
+			log.Println("GRPC server couldn't stop gracefully in time. Doing force stop.")
 			grpcServer.Stop()
 		})
 		defer timer.Stop()
 		grpcServer.GracefulStop()
-		logger.Info("Server stopped.")
+		logger.Info("GRPC Server stopped.")
 	}()
 
 	return grpcServer

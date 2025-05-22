@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -13,7 +14,7 @@ type UpgradedCalculator struct {
 	requestId string
 	variables map[string]int64
 	subs      map[string][]chan int64
-	mutex     sync.RWMutex
+	mutex     sync.Mutex
 }
 
 func NewUpgradedCalculator(
@@ -28,13 +29,15 @@ func NewUpgradedCalculator(
 	}
 }
 
-func (c *UpgradedCalculator) Execute(operations []Operation) ([]PrintOutput, error) {
+func (c *UpgradedCalculator) Execute(cont context.Context, operations []Operation) ([]PrintOutput, error) {
 	var (
-		result   []PrintOutput
-		resultMu sync.Mutex
-		wg       sync.WaitGroup
-		errorsCh = make(chan error, len(operations))
+		result      []PrintOutput
+		resultMu    sync.Mutex
+		wg          sync.WaitGroup
+		errorsCh    = make(chan error, 1)
+		ctx, cancel = context.WithCancel(cont)
 	)
+	defer cancel()
 	defer close(errorsCh)
 
 	wg.Add(len(operations))
@@ -42,6 +45,13 @@ func (c *UpgradedCalculator) Execute(operations []Operation) ([]PrintOutput, err
 	for _, op := range operations {
 		go func(op Operation) {
 			defer wg.Done()
+
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+
 			var err error
 
 			switch op.Type {
@@ -58,8 +68,6 @@ func (c *UpgradedCalculator) Execute(operations []Operation) ([]PrintOutput, err
 						Value: value,
 					})
 					resultMu.Unlock()
-				} else {
-					errorsCh <- err
 				}
 				c.logger.Debug("Print operation", "request_id", c.requestId, "operation", op)
 			default:
@@ -67,7 +75,11 @@ func (c *UpgradedCalculator) Execute(operations []Operation) ([]PrintOutput, err
 			}
 
 			if err != nil {
-				errorsCh <- err
+				select {
+				case errorsCh <- err:
+					cancel()
+				default:
+				}
 			}
 		}(op)
 	}
@@ -128,12 +140,12 @@ func (c *UpgradedCalculator) getOperandValue(op Operand) (int64, error) {
 }
 
 func (c *UpgradedCalculator) subscribeVariable(name string) (int64, error) {
-	c.mutex.RLock()
+	c.mutex.Lock()
 	if val, exists := c.variables[name]; exists {
-		c.mutex.RUnlock()
+		c.mutex.Unlock()
 		return val, nil
 	}
-	c.mutex.RUnlock()
+	c.mutex.Unlock()
 
 	ch := make(chan int64, 1)
 

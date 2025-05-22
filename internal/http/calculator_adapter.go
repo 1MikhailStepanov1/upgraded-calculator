@@ -24,7 +24,7 @@ func (ca *CalculatorHTTP) Execute(
 		return nil, err
 	}
 
-	result, err := c.Execute(req)
+	result, err := c.Execute(ctx, req)
 	if err != nil {
 		ca.logger.Error(err.Error())
 		return nil, err

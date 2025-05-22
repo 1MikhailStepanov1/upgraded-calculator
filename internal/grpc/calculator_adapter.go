@@ -26,7 +26,7 @@ func (ca *CalculatorGRPC) Execute(
 			ca.logger.Error(err.Error())
 		}
 	}
-	result, err := c.Execute(operations)
+	result, err := c.Execute(ctx, operations)
 	if err != nil {
 		ca.logger.Error(err.Error())
 		return nil, err
