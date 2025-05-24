@@ -10,10 +10,6 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 	"upgraded-calculator/internal/config"
 )
 
@@ -21,7 +17,7 @@ func CreateServer(
 	config *config.Config,
 	logger *slog.Logger,
 	ctx context.Context,
-) (*http.Server, context.Context) {
+) *http.Server {
 
 	calculator := CalculatorHTTP{logger: logger}
 
@@ -53,27 +49,5 @@ func CreateServer(
 	// Creating server instance
 	server := &http.Server{Addr: fmt.Sprintf("0.0.0.0:%d", config.App.HTTPPort), Handler: router}
 
-	serverCtx, serverStop := context.WithCancel(ctx)
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	go func() {
-		<-sig
-		shutdownCtx, _ := context.WithTimeout(serverCtx, config.App.HTTPShutdownTimeout*time.Second)
-		go func() {
-			<-shutdownCtx.Done()
-			if shutdownCtx.Err() == context.DeadlineExceeded {
-				logger.Error("Graceful shutdown HTTP server timed out.. forcing exit.")
-			}
-		}()
-
-		err := server.Shutdown(shutdownCtx)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-		logger.Info("Shutting down HTTP server")
-		serverStop()
-		logger.Info("HTTP Server stopped")
-	}()
-
-	return server, serverCtx
+	return server
 }

@@ -8,6 +8,10 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
 	cfg "upgraded-calculator/internal/config"
 	calculatorGrpcServer "upgraded-calculator/internal/grpc"
 	calculatorHttpServer "upgraded-calculator/internal/http"
@@ -61,6 +65,8 @@ func main() {
 	defer cancel()
 
 	errChan := make(chan error, 2)
+	grpcServer := calculatorGrpcServer.CreateServer(config, logger)
+	httpServer := calculatorHttpServer.CreateServer(config, logger, ctx)
 
 	go func() {
 		lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", config.App.GRPCPort))
@@ -69,21 +75,61 @@ func main() {
 			return
 		}
 
-		server := calculatorGrpcServer.CreateServer(config, logger)
 		logger.Info("GRPC Server started")
-		if err = server.Serve(lis); err != nil {
+		if err = grpcServer.Serve(lis); err != nil {
 			errChan <- fmt.Errorf("failed to serve GRPC server: %v", err)
 		}
 	}()
 
 	go func() {
-		httpServer, httpServerContext := calculatorHttpServer.CreateServer(config, logger, ctx)
 		logger.Info("HTTP Server started")
-
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errChan <- fmt.Errorf("HTTP server error: %v", err)
 		}
-		<-httpServerContext.Done()
+	}()
+
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	go func() {
+		<-sig
+		logger.Info("Received shutdown signal. Stopping servers...")
+
+		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, config.App.HTTPShutdownTimeout*time.Second)
+		defer shutdownCancel()
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+
+		// Graceful shutdown HTTP
+		go func() {
+			defer wg.Done()
+			if err := httpServer.Shutdown(shutdownCtx); err != nil {
+				logger.Error("HTTP shutdown error:", err)
+			} else {
+				logger.Info("HTTP Server stopped gracefully")
+			}
+		}()
+
+		// Graceful shutdown gRPC
+		go func() {
+			defer wg.Done()
+			grpcGracefulDone := make(chan struct{})
+			go func() {
+				grpcServer.GracefulStop()
+				close(grpcGracefulDone)
+			}()
+
+			select {
+			case <-grpcGracefulDone:
+				logger.Info("GRPC Server stopped gracefully")
+			case <-time.After(config.App.GRPCShutdownTimeout * time.Second):
+				logger.Warn("GRPC graceful shutdown timed out. Forcing stop.")
+				grpcServer.Stop()
+			}
+		}()
+
+		wg.Wait()
+		cancel()
 	}()
 
 	select {
@@ -91,6 +137,6 @@ func main() {
 		logger.Error(err.Error())
 		cancel()
 	case <-ctx.Done():
-		logger.Info("Shutting down servers...")
+		logger.Info("Servers stopped")
 	}
 }

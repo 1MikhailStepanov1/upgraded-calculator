@@ -5,12 +5,7 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
-	"log"
 	"log/slog"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 	"upgraded-calculator/gen"
 	"upgraded-calculator/internal/config"
 )
@@ -48,20 +43,6 @@ func CreateServer(
 
 	grpcServer := grpc.NewServer(grpc.KeepaliveParams(keepalive.ServerParameters{Timeout: config.App.GRPCTimeout}))
 	RegisterGRPCServer(grpcServer, calculator)
-
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	go func() {
-		<-sig
-		logger.Info("Initiating GRPC shutdown...")
-		timer := time.AfterFunc(config.App.GRPCShutdownTimeout*time.Second, func() {
-			log.Println("GRPC server couldn't stop gracefully in time. Doing force stop.")
-			grpcServer.Stop()
-		})
-		defer timer.Stop()
-		grpcServer.GracefulStop()
-		logger.Info("GRPC Server stopped.")
-	}()
 
 	return grpcServer
 }
