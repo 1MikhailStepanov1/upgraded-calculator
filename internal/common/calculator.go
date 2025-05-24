@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"sync"
 	"time"
+	config "upgraded-calculator/internal/config"
 )
 
 type UpgradedCalculator struct {
@@ -36,53 +37,71 @@ func (c *UpgradedCalculator) Execute(cont context.Context, operations []Operatio
 		wg          sync.WaitGroup
 		errorsCh    = make(chan error, 1)
 		ctx, cancel = context.WithCancel(cont)
+		cfg         = config.New()
 	)
 	defer cancel()
 	defer close(errorsCh)
 
-	wg.Add(len(operations))
-	c.logger.Debug("Operations to execute", "request_id", c.requestId, "length", len(operations))
-	for _, op := range operations {
-		go func(op Operation) {
-			defer wg.Done()
+	workerCount := cfg.App.CalculatorWorkersCount
+	if workerCount <= 0 {
+		workerCount = 1
+	}
+	tasksCh := make(chan Operation, len(operations))
 
+	c.logger.Debug("Operations to execute", "request_id", c.requestId, "length", len(operations))
+
+	wg.Add(workerCount)
+	for i := 0; i < workerCount; i++ {
+		go func(workerID int) {
+			defer wg.Done()
+			for op := range tasksCh {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					var err error
+
+					switch op.Type {
+					case CalcOperation:
+						err = c.compute(op)
+						c.logger.Debug("Compute operation", "request_id", c.requestId, "operation", op)
+					case PrintOperation:
+						var value int64
+						value, err = c.subscribeVariable(op.Var)
+						if err == nil {
+							resultMu.Lock()
+							result = append(result, PrintOutput{
+								Var:   op.Var,
+								Value: value,
+							})
+							resultMu.Unlock()
+						}
+						c.logger.Debug("Print operation", "request_id", c.requestId, "operation", op)
+					default:
+						err = errors.New("invalid operation")
+					}
+
+					if err != nil {
+						select {
+						case errorsCh <- err:
+							cancel()
+						default:
+						}
+					}
+				}
+			}
+		}(i)
+	}
+	go func() {
+		defer close(tasksCh)
+		for _, op := range operations {
 			select {
 			case <-ctx.Done():
-				return
-			default:
+				break
+			case tasksCh <- op:
 			}
-
-			var err error
-
-			switch op.Type {
-			case CalcOperation:
-				err = c.compute(op)
-				c.logger.Debug("Compute operation", "request_id", c.requestId, "operation", op)
-			case PrintOperation:
-				var value int64
-				value, err = c.subscribeVariable(op.Var)
-				if err == nil {
-					resultMu.Lock()
-					result = append(result, PrintOutput{
-						Var:   op.Var,
-						Value: value,
-					})
-					resultMu.Unlock()
-				}
-				c.logger.Debug("Print operation", "request_id", c.requestId, "operation", op)
-			default:
-				err = errors.New("invalid operation")
-			}
-
-			if err != nil {
-				select {
-				case errorsCh <- err:
-					cancel()
-				default:
-				}
-			}
-		}(op)
-	}
+		}
+	}()
 
 	wg.Wait()
 
