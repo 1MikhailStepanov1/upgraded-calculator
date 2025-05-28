@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"sync"
 	"time"
-	config "upgraded-calculator/internal/config"
+	"upgraded-calculator/internal/config"
 )
 
 type UpgradedCalculator struct {
